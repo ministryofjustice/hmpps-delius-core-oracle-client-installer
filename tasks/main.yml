@@ -15,6 +15,19 @@
   loop_control:
     loop_var: artifact
 
+- name: Configure git credential store
+  become_user: jenkins
+  git_config:
+    name: credential.helper
+    scope: global
+    value: store
+
+- name: Configure git credentials
+  become_user: jenkins
+  template:
+    src: git-credentials.j2
+    dest: ~/.git-credentials
+
 - name: Clean up after ourselves
   file:
     state: absent
