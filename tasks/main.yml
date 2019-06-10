@@ -1,6 +1,15 @@
 ---
 # tasks file for hmpps-delius-core-oracle-client-installer
 
+- name: Set facts
+  set_fact:
+    git_origin: https://github.com
+    git_credentials: "https://hmpps-jenkins:{{ github_access_token }}@github.com"
+    training_scripts_repo: "{{ training_scripts_repo | default('ministryofjustice/hmpps-delius-core-training-scripts.git') }}"
+    training_scripts_dir: "{{ training_scripts_dir | default('/u01/training') }}"
+    app_scripts_repo: "{{ app_scripts_dir | default('ministryofjustice/hmpps-delius-core-app-scripts.git') }}"
+    app_scripts_dir: "{{ app_scripts_dir | default('/u01/app') }}"
+
 - name: Get our artifacts from S3
   include: copy-artifacts.yml
   with_items: "{{ artifacts }}"
@@ -15,16 +24,44 @@
   loop_control:
     loop_var: artifact
 
-- name: Configure git credential store
-  git_config:
-    name: credential.helper
-    scope: global
-    value: store
+- name: Clone repos
+  git:
+    repo: '{{ git_credentials }}/{{ item.remote }}'
+    dest: '{{ item.local }}'
+  with_items:
+    - { remote: '{{ training_scripts_repo }}', local: '{{ training_scripts_dir }}' }
+    - { remote: '{{ app_scripts_repo }}', local: '{{ app_scripts_dir }}' }
 
-- name: Configure git credentials
+- name: Remove git credentials
+  git_config:
+    repo: '{{ item.local }}'
+    name: remote.origin.url
+    value: '{{ git_origin }}/{{ item.remote }}'
+    scope: local
+  with_items:
+    - { remote: '{{ training_scripts_repo }}', local: '{{ training_scripts_dir }}' }
+    - { remote: '{{ app_scripts_repo }}', local: '{{ app_scripts_dir }}' }
+
+- name: Set permissions
+  file:
+    path: '{{ item.path }}'
+    state: directory
+    recurse: yes
+    mode: g+rwx,o-rwx
+  with_items:
+    - { path: '{{ training_scripts_dir }}' }
+    - { path: '{{ app_scripts_dir }}' }
+
+- name: Create git pull helper script
   template:
-    src: git-credentials.j2
-    dest: ~/.git-credentials
+    src: 'pull-scripts.sh.j2'
+    dest: '/usr/bin/pull-scripts'
+    mode: u+x
+
+- name: Create bash profile
+  template:
+    src: training-profile.sh.j2
+    dest: /etc/profile.d/training-profile.sh
 
 - name: Clean up after ourselves
   file:
