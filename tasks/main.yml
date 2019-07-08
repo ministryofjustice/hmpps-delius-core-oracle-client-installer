@@ -52,10 +52,15 @@
     - { path: '{{ training_scripts_dir }}' }
     - { path: '{{ app_scripts_dir }}' }
 
-- name: Create bash profile
+- name: Create bash profile (training)
   template:
     src: training-profile.sh.j2
     dest: /etc/profile.d/training-profile.sh
+
+- name: Create bash profile (app)
+  template:
+    src: app-profile.sh.j2
+    dest: /etc/profile.d/app-profile.sh
 
 - name: Clean up after ourselves
   file:
