@@ -4,7 +4,7 @@
 - name: Set facts
   set_fact:
     git_origin: https://github.com
-    git_credentials: "https://hmpps-jenkins:{{ github_access_token }}@github.com"
+    git_credentials: "https://github.com"
     training_scripts_repo: "{{ training_scripts_repo | default('ministryofjustice/hmpps-delius-core-training-scripts.git') }}"
     training_scripts_dir: "{{ training_scripts_dir | default('/u01/training') }}"
     app_scripts_repo: "{{ app_scripts_dir | default('ministryofjustice/hmpps-delius-core-app-scripts.git') }}"
